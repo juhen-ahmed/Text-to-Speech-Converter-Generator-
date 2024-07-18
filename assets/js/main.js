@@ -34,8 +34,18 @@ function animateOnScroll() {
   });
 }
 
-function populateVoiceList() {
-  voices = window.speechSynthesis.getVoices();
+async function populateVoiceList() {
+  voices = await new Promise((resolve) => {
+    let id;
+    const interval = setInterval(() => {
+      let voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        clearInterval(interval);
+        resolve(voices);
+      }
+    }, 100);
+  });
+
   voiceSelect.innerHTML = ''; // Clear previous options
   voices.forEach((voice, index) => {
     const option = document.createElement("option");
@@ -43,6 +53,7 @@ function populateVoiceList() {
     option.value = index;
     voiceSelect.appendChild(option);
   });
+
   if (voices.length > 0) {
     speech.voice = voices[0];
   }
@@ -55,8 +66,10 @@ voiceSelect.addEventListener("change", () => {
 });
 
 convertBtn.addEventListener("click", () => {
-  speech.text = textarea.value;
-  window.speechSynthesis.speak(speech);
+  if (textarea.value !== "") {
+    speech.text = textarea.value;
+    window.speechSynthesis.speak(speech);
+  }
 });
 
 checkTextarea();
@@ -64,3 +77,6 @@ textarea.addEventListener("input", checkTextarea);
 console.log(textarea);
 animateOnScroll();
 window.addEventListener("scroll", animateOnScroll);
+
+// Ensure voices are populated on page load
+populateVoiceList();
